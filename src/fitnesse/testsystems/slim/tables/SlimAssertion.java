@@ -34,6 +34,10 @@ public class SlimAssertion implements Assertion {
     return expectation;
   }
 
+  public Instruction getBaseInstruction() {
+    return instruction;
+  }
+
   /**
    * Get Instructions from the assertions; NOOP's are filtered out.
    * @param assertions

@@ -36,6 +36,14 @@ public class CallInstruction extends Instruction {
     return new InstructionResult(getId(), result);
   }
 
+  public String getMethodName() {
+    return methodName;
+  }
+
+  public Object[] getArgs() {
+    return args;
+  }
+
   @Override
   public String toString() {
     final StringBuffer sb = new StringBuffer();
