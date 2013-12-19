@@ -319,7 +319,11 @@ public abstract class SlimTable {
       return row;
     }
 
-    // Used only by XmlFormatter.SlimTestXmlFormatter
+    public String getOriginalContent() {
+      return originalContent;
+    }
+
+      // Used only by XmlFormatter.SlimTestXmlFormatter
     public String getExpected() {
       return originalContent;
     }
@@ -459,7 +463,7 @@ public abstract class SlimTable {
     }
   }
 
-  class ReturnedValueExpectation extends RowExpectation {
+  public class ReturnedValueExpectation extends RowExpectation {
     public ReturnedValueExpectation(int col, int row) {
       super(col, row, table.getCellContents(col, row));
     }
