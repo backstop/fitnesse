@@ -81,6 +81,7 @@ public class ScriptTable extends SlimTable {
     int lastCol = table.getColumnCountInRow(row) - 1;
     String actionName = getActionNameStartingAt(0, lastCol, row);
     String[] args = getArgumentsStartingAt(0 + 1, lastCol, row);
+    args = replaceSymbolsInArray(args);
     ScenarioTable scenario = getTestContext().getScenario(Disgracer.disgraceClassName(actionName));
     if (scenario != null) {
       scenario.call(args, this, row);
@@ -179,7 +180,7 @@ public class ScriptTable extends SlimTable {
       addExpectation(new ArgumentExpectation(getInstructionTag(), extractor.argumentColumn, row));
       extractor.extractNextArgument();
     }
-    return extractor.getArguments();
+    return replaceSymbolsInArray(extractor.getArguments());
   }
 
   private boolean invokesSequentialArgumentProcessing(String cellContents) {

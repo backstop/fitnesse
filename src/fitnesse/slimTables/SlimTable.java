@@ -78,6 +78,12 @@ public abstract class SlimTable {
     return new FullExpansionSymbolReplacer(s).replace();
   }
 
+  public String[] replaceSymbolsInArray(String[] array) {
+      for (int i = 0; i < array.length; i++) {
+          array[i] = replaceSymbols(array[i]);
+      }
+      return array;
+  }
 
   protected abstract String getTableType();
 
@@ -168,6 +174,9 @@ public abstract class SlimTable {
     int columnCount = table.getColumnCountInRow(row);
     List<String> arguments = new ArrayList<String>();
     for (int col = startingColumn; col < columnCount; col++) {
+      String unescapedCellContents = table.getUnescapedCellContents(col, row);
+      String valueToSet = replaceSymbols(unescapedCellContents);
+      arguments.add(valueToSet);
       arguments.add(table.getUnescapedCellContents(col, row));
       addExpectation(new VoidReturnExpectation(getInstructionTag(), col, row));
     }
