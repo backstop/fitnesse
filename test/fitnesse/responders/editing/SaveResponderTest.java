@@ -3,10 +3,10 @@
 package fitnesse.responders.editing;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static util.RegexTestCase.assertHasRegexp;
 import static util.RegexTestCase.assertSubString;
-
 import fitnesse.Responder;
 import fitnesse.http.MockRequest;
 import fitnesse.http.MockResponseSender;
@@ -18,6 +18,7 @@ import fitnesse.wiki.PathParser;
 import fitnesse.wiki.WikiPage;
 import fitnesse.wiki.WikiPageUtil;
 import fitnesse.wiki.mem.InMemoryPage;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,7 +27,7 @@ public class SaveResponderTest {
   private WikiPage root;
   private Response response;
   public MockRequest request;
-  public Responder responder;
+  public SaveResponder responder;
 
   @Before
   public void setUp() throws Exception {
@@ -34,13 +35,7 @@ public class SaveResponderTest {
     FitNesseUtil.makeTestContext(root);
     request = new MockRequest();
     responder = new SaveResponder();
-    SaveResponder.contentFilter = null;
     SaveRecorder.clear();
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    SaveResponder.contentFilter = null;
   }
 
   @Test
@@ -50,7 +45,7 @@ public class SaveResponderTest {
 
     Response response = responder.makeResponse(FitNesseUtil.makeTestContext(root), request);
     assertEquals(303, response.getStatus());
-    assertHasRegexp("Location: ChildPage", response.makeHttpHeaders());
+    assertHasRegexp("Location: /ChildPage", response.makeHttpHeaders());
 
     String newContent = root.getChildPage("ChildPage").getData().getContent();
     assertEquals("some new content", newContent);
@@ -101,16 +96,31 @@ public class SaveResponderTest {
     request.setResource("ChildPageTwo");
     request.addInput(EditResponder.CONTENT_INPUT_NAME, "some new content");
     request.addInput(EditResponder.HELP_TEXT, "some help");
-    request.addInput(EditResponder.SUITES, "some help");
+    request.addInput(EditResponder.SUITES, "some suite");
 
     responder.makeResponse(FitNesseUtil.makeTestContext(root), request);
 
     assertEquals(true, root.hasChildPage("ChildPageTwo"));
-    String newContent = root.getChildPage("ChildPageTwo").getData().getContent();
+    PageData pageData = root.getChildPage("ChildPageTwo").getData();
+    String newContent = pageData.getContent();
     assertEquals("some new content", newContent);
-    assertEquals("some help", root.getChildPage("ChildPageTwo").getData().getAttribute("Help"));
+    assertEquals("some help", pageData.getAttribute(PageData.PropertyHELP));
+    assertEquals("some suite", pageData.getAttribute(PageData.PropertySUITES));
     assertTrue("RecentChanges should exist", root.hasChildPage("RecentChanges"));
     checkRecentChanges(root, "ChildPageTwo");
+  }
+  
+  @Test
+  public void testRemovesHelpAndSuitesAttributeIfEmpty() throws Exception {
+    request.setResource("ChildPageTwo");
+    request.addInput(EditResponder.HELP_TEXT, "");
+    request.addInput(EditResponder.SUITES, "");
+    
+    responder.makeResponse(FitNesseUtil.makeTestContext(root), request);
+    
+    PageData pageData = root.getChildPage("ChildPageTwo").getData();
+    assertFalse("should not have help attribute", pageData.hasAttribute(PageData.PropertyHELP));
+    assertFalse("should not have suites attribute", pageData.hasAttribute(PageData.PropertySUITES));
   }
 
   @Test
@@ -155,23 +165,6 @@ public class SaveResponderTest {
 
     String user = root.getChildPage("EditPage").getData().getAttribute(PageData.LAST_MODIFYING_USER);
     assertEquals("Aladdin", user);
-  }
-
-  @Test
-  public void testContentFilter() throws Exception {
-    SaveResponder.contentFilter = new ContentFilter() {
-      public boolean isContentAcceptable(String content, String page) {
-        return false;
-      }
-    };
-    WikiPageUtil.addPage(root, PathParser.parse("ChildPage"));
-    prepareRequest("ChildPage");
-
-    Response response = responder.makeResponse(FitNesseUtil.makeTestContext(root), request);
-    assertEquals(200, response.getStatus());
-    MockResponseSender sender = new MockResponseSender();
-    sender.doSending(response);
-    assertSubString("Your changes will not be saved!", sender.sentData());
   }
 
   private void createAndSaveANewPage(String pageName) throws Exception {

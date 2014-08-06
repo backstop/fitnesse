@@ -9,10 +9,10 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import fitnesse.wikitext.Utils;
@@ -43,7 +43,7 @@ public class WikiPageProperties extends WikiPageProperty implements Serializable
 
   public WikiPageProperties(WikiPageProperties that) {
     if (that != null && that.children != null)
-      children = new HashMap<String, WikiPageProperty>(that.children);
+      children = new TreeMap<String, WikiPageProperty>(that.children);
   }
 
   public void loadFromXmlStream(InputStream inputStream) {
@@ -63,18 +63,6 @@ public class WikiPageProperties extends WikiPageProperty implements Serializable
       document = XmlUtil.newDocument(xml);
     } catch (Exception e) {
       throw new RuntimeException("Unable to parse XML from string " + xml, e);
-    }
-    Element root = document.getDocumentElement();
-    loadFromRootElement(root);
-  }
-
-
-  public void loadFromXml(InputStream xml) {
-    Document document;
-    try {
-      document = XmlUtil.newDocument(xml);
-    } catch (Exception e) {
-      throw new RuntimeException("Unable to parse XML from input stream " + xml, e);
     }
     Element root = document.getDocumentElement();
     loadFromRootElement(root);

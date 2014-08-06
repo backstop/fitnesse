@@ -59,11 +59,11 @@ public class RenamePageResponderTest extends ResponderTestCase {
   @Test
   public void testPageRedirection() throws Exception {
     WikiPage pageOne = WikiPageUtil.addPage(root, PathParser.parse("OneOne"), "Content");
-    WikiPageUtil.addPage(pageOne, PathParser.parse("TwoOne"));
+    WikiPageUtil.addPage(pageOne, PathParser.parse("TwoOne"), "");
     Response response = doRename("OneOne.TwoOne", "ReName", true);
     assertNotNull(response);
     assertEquals(303, response.getStatus());
-    assertEquals("OneOne.ReName", response.getHeader("Location"));
+    assertEquals("/OneOne.ReName", response.getHeader("Location"));
   }
 
   @Test

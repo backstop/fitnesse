@@ -34,7 +34,7 @@ public class AddChildPageResponderTest {
     root = InMemoryPage.makeRoot("root");
     
     crawler = root.getPageCrawler();
-    WikiPageUtil.addPage(root, PathParser.parse("TestPage"));
+    WikiPageUtil.addPage(root, PathParser.parse("TestPage"), "");
     childName = "ChildPage";
     String childContent = "child content";
     String pagetype = "";
@@ -162,6 +162,17 @@ public class AddChildPageResponderTest {
     request.addInput("pageType", "Suite");
     responder.makeResponse(context, request);
     getChildPage(childName);
+    assertFalse(isTest());
+    assertTrue(isSuite());
+  }
+
+
+  @Test
+  public void pageTypeShouldBeSuiteWhenPageNameWouldQualifyForTestPage() throws Exception {
+    request.addInput("pageType", "Suite");
+    request.addInput(EditResponder.PAGE_NAME, "TestChildPage");
+    responder.makeResponse(context, request);
+    getChildPage("TestChildPage");
     assertFalse(isTest());
     assertTrue(isSuite());
   }

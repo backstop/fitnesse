@@ -4,47 +4,39 @@ package fitnesse.testsystems.fit;
 
 import java.io.IOException;
 import java.util.LinkedList;
-import java.util.Map;
 
-import fitnesse.FitNesseContext;
-import fitnesse.testsystems.ClientBuilder;
+import fitnesse.testsystems.CompositeExecutionLogListener;
 import fitnesse.testsystems.CompositeTestSystemListener;
-import fitnesse.testsystems.Descriptor;
-import fitnesse.testsystems.ExecutionLog;
+import fitnesse.testsystems.ExecutionLogListener;
 import fitnesse.testsystems.TestPage;
 import fitnesse.testsystems.TestSummary;
 import fitnesse.testsystems.TestSystem;
 import fitnesse.testsystems.TestSystemListener;
 
-public class FitTestSystem extends ClientBuilder<FitClient> implements TestSystem, FitClientListener {
+public class FitTestSystem implements TestSystem, FitClientListener {
   protected static final String EMPTY_PAGE_CONTENT = "OH NO! This page is empty!";
 
-  private static SocketDealer socketDealer = new SocketDealer();
-
   private final CompositeTestSystemListener testSystemListener;
-  private CommandRunningFitClient client;
+  private final String testSystemName;
+  private final CommandRunningFitClient client;
   private LinkedList<TestPage> processingQueue = new LinkedList<TestPage>();
   private TestPage currentTestPage;
-  private final int port;
 
-  public FitTestSystem(Descriptor descriptor,
-                       int port) {
-    super(descriptor);
-    this.port = port;
+  public FitTestSystem(String testSystemName, CommandRunningFitClient fitClient) {
     this.testSystemListener = new CompositeTestSystemListener();
-  }
-
-  public static SocketDealer socketDealer() {
-    return socketDealer;
+    this.testSystemName = testSystemName;
+    this.client = fitClient;
+    client.addFitClientListener(this);
   }
 
   @Override
   public String getName() {
-    return descriptor.getTestSystemName();
+    return testSystemName;
   }
 
   @Override
-  public void start() {
+  public void start() throws IOException {
+    // TODO: start a server socket (thread) here
     client.start();
     testSystemStarted(this);
   }
@@ -71,7 +63,7 @@ public class FitTestSystem extends ClientBuilder<FitClient> implements TestSyste
   public void bye() throws IOException, InterruptedException {
     client.done();
     client.join();
-    testSystemStopped(client.getExecutionLog(), null);
+    testSystemStopped(null);
   }
 
   @Override
@@ -101,13 +93,11 @@ public class FitTestSystem extends ClientBuilder<FitClient> implements TestSyste
   }
 
   @Override
-  public void exceptionOccurred(Exception e) {
-    ExecutionLog log = client.getExecutionLog();
-    log.addException(e);
+  public void exceptionOccurred(Throwable t) {
     try {
       client.kill();
     } finally {
-      testSystemStopped(log, e);
+      testSystemStopped(t);
     }
   }
 
@@ -115,8 +105,8 @@ public class FitTestSystem extends ClientBuilder<FitClient> implements TestSyste
     testSystemListener.testSystemStarted(testSystem);
   }
 
-  private void testSystemStopped(ExecutionLog executionLog, Throwable throwable) {
-    testSystemListener.testSystemStopped(this, executionLog, throwable);
+  private void testSystemStopped(Throwable throwable) {
+    testSystemListener.testSystemStopped(this, throwable);
   }
 
   // Remove from here and below: this has all to do with client creation.
@@ -125,22 +115,4 @@ public class FitTestSystem extends ClientBuilder<FitClient> implements TestSyste
   public boolean isSuccessfullyStarted() {
     return client.isSuccessfullyStarted();
   }
-
-  @Override
-  public FitClient build() {
-    String testRunner = descriptor.getTestRunner();
-    String classPath = descriptor.getClassPath();
-    String command = buildCommand(descriptor.getCommandPattern(), testRunner, classPath);
-    Map<String, String> environmentVariables = descriptor.createClasspathEnvironment(classPath);
-    CommandRunningFitClient.CommandRunningStrategy runningStrategy =
-            new CommandRunningFitClient.OutOfProcessCommandRunner(command, environmentVariables);
-
-    return buildFitClient(runningStrategy);
-  }
-
-  protected FitClient buildFitClient(CommandRunningFitClient.CommandRunningStrategy runningStrategy) {
-    client = new CommandRunningFitClient(this, port, socketDealer, runningStrategy);
-    return client;
-  }
-
 }

@@ -3,8 +3,6 @@
 package fitnesse.testsystems.slim;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,18 +11,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import fitnesse.slim.SlimError;
-import fitnesse.slim.SlimServer;
 import fitnesse.testsystems.Assertion;
+import fitnesse.testsystems.CompositeExecutionLogListener;
 import fitnesse.testsystems.CompositeTestSystemListener;
 import fitnesse.testsystems.ExceptionResult;
-import fitnesse.testsystems.ExecutionLog;
+import fitnesse.testsystems.ExecutionLogListener;
 import fitnesse.testsystems.TestPage;
 import fitnesse.testsystems.TestResult;
 import fitnesse.testsystems.TestSummary;
 import fitnesse.testsystems.TestSystem;
 import fitnesse.testsystems.TestSystemListener;
 import fitnesse.testsystems.slim.results.SlimExceptionResult;
-import fitnesse.testsystems.slim.results.SlimTestResult;
 import fitnesse.testsystems.slim.tables.SlimAssertion;
 import fitnesse.testsystems.slim.tables.SlimTable;
 import fitnesse.testsystems.slim.tables.SyntaxError;
@@ -90,6 +87,8 @@ public abstract class SlimTestSystem implements TestSystem {
     } catch (IOException e) {
       exceptionOccurred(e);
       throw e;
+    } catch (Exception e) {
+      exceptionOccurred(e);
     }
   }
 
@@ -102,6 +101,7 @@ public abstract class SlimTestSystem implements TestSystem {
     testComplete(pageToTest, testContext.getTestSummary());
   }
 
+  @Override
   public void addTestSystemListener(TestSystemListener listener) {
     testSystemListener.addTestSystemListener(listener);
   }
@@ -113,7 +113,7 @@ public abstract class SlimTestSystem implements TestSystem {
 
   protected abstract void processAllTablesOnPage(TestPage testPage) throws IOException;
 
-  protected void processTable(SlimTable table) throws IOException {
+  protected void processTable(SlimTable table) throws IOException, SyntaxError {
     List<SlimAssertion> assertions = createAssertions(table);
     Map<String, Object> instructionResults;
     if (!stopTestCalled) {
@@ -132,15 +132,9 @@ public abstract class SlimTestSystem implements TestSystem {
     evaluateTables(assertions, instructionResults);
   }
 
-  private List<SlimAssertion> createAssertions(SlimTable table) {
+  private List<SlimAssertion> createAssertions(SlimTable table) throws SyntaxError {
     List<SlimAssertion> assertions = new ArrayList<SlimAssertion>();
-    try {
-      assertions.addAll(table.getAssertions());
-    } catch (SyntaxError e) {
-      String tableName = table.getTable().getCellContents(0, 0);
-      // TODO: remove: raise TableFormatException or something like that.
-      table.getTable().updateContent(0, 0, SlimTestResult.fail(String.format("%s: <strong>Bad table! %s</strong>", tableName, e.getMessage())));
-    }
+    assertions.addAll(table.getAssertions());
     return assertions;
   }
 
@@ -162,12 +156,6 @@ public abstract class SlimTestSystem implements TestSystem {
       return String.format("The instruction %s is malformed", exceptionMessage.substring(exceptionMessage.indexOf(" ") + 1));
 
     return exceptionMessage;
-  }
-
-  public static String exceptionToString(Throwable e) {
-    StringWriter stringWriter = new StringWriter();
-    PrintWriter pw = new PrintWriter(stringWriter);
-    return SlimServer.EXCEPTION_TAG + stringWriter.toString();
   }
 
   protected void evaluateTables(List<SlimAssertion> assertions, Map<String, Object> instructionResults) {
@@ -231,12 +219,7 @@ public abstract class SlimTestSystem implements TestSystem {
   // Ensure testSystemStopped is called only once per test system. First call counts.
   protected void testSystemStopped(Throwable e) {
     if (testSystemIsStopped) return;
-
     testSystemIsStopped = true;
-    ExecutionLog log = slimClient.getExecutionLog();
-    if (e != null) {
-      log.addException(e);
-    }
-    testSystemListener.testSystemStopped(this, log, e);
+    testSystemListener.testSystemStopped(this, e);
   }
 }

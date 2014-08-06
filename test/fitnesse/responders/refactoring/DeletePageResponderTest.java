@@ -32,8 +32,8 @@ public class DeletePageResponderTest extends ResponderTestCase {
 
   @Test
   public void testDeleteConfirmation() throws Exception {
-    WikiPage level1 = WikiPageUtil.addPage(this.root, this.level1Path);
-    WikiPageUtil.addPage(level1, this.level2Path);
+    WikiPage level1 = WikiPageUtil.addPage(this.root, this.level1Path, "");
+    WikiPageUtil.addPage(level1, this.level2Path, "");
     MockRequest request = new MockRequest();
     request.setResource(this.qualifiedLevel2Name);
     request.addInput("deletePage", "");
@@ -45,8 +45,8 @@ public class DeletePageResponderTest extends ResponderTestCase {
 
   @Test
   public void testDeletePage() throws Exception {
-    WikiPage level1 = WikiPageUtil.addPage(this.root, this.level1Path);
-    WikiPageUtil.addPage(level1, this.level2Path);
+    WikiPage level1 = WikiPageUtil.addPage(this.root, this.level1Path, "");
+    WikiPageUtil.addPage(level1, this.level2Path, "");
     assertTrue(this.root.getPageCrawler().pageExists(this.level1Path));
     MockRequest request = new MockRequest();
     request.setResource(this.level1Name);
@@ -56,7 +56,7 @@ public class DeletePageResponderTest extends ResponderTestCase {
     String page = response.getContent();
     assertNotSubString("Are you sure you want to delete", page);
     assertEquals(303, response.getStatus());
-    assertEquals("root", response.getHeader("Location"));
+    assertEquals("/root", response.getHeader("Location"));
     assertFalse(this.root.getPageCrawler().pageExists(PathParser.parse(this.level1Name)));
 
     List<?> children = this.root.getChildren();
@@ -70,7 +70,7 @@ public class DeletePageResponderTest extends ResponderTestCase {
     this.request.addInput("confirmed", "yes");
     Response response = this.responder.makeResponse(FitNesseUtil.makeTestContext(this.root), this.request);
     assertEquals(303, response.getStatus());
-    assertEquals("FrontPage", response.getHeader("Location"));
+    assertEquals("/FrontPage", response.getHeader("Location"));
   }
 
   @Override

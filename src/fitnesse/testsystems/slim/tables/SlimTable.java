@@ -36,10 +36,11 @@ public abstract class SlimTable {
   private List<SlimTable> children = new LinkedList<SlimTable>();
   private SlimTable parent = null;
 
-  private SlimTestContext testContext;
+  private final SlimTestContext testContext;
 
   protected final Table table;
   protected String id;
+  protected CustomComparatorRegistry customComparatorRegistry;
 
   public SlimTable(Table table, String id, SlimTestContext testContext) {
     this.id = id;
@@ -108,8 +109,7 @@ public abstract class SlimTable {
   protected String getFixtureName() {
     String tableHeader = table.getCellContents(0, 0);
     String fixtureName = getFixtureName(tableHeader);
-    String disgracedFixtureName = Disgracer.disgraceClassName(fixtureName);
-    return disgracedFixtureName;
+    return Disgracer.disgraceClassName(fixtureName);
   }
 
   protected String getFixtureName(String tableHeader) {
@@ -173,6 +173,10 @@ public abstract class SlimTable {
 
   public List<SlimTable> getChildren() {
     return children;
+  }
+
+  public void setCustomComparatorRegistry(CustomComparatorRegistry customComparatorRegistry) {
+    this.customComparatorRegistry = customComparatorRegistry;
   }
 
   static class Disgracer {
@@ -284,7 +288,7 @@ public abstract class SlimTable {
     public TestResult evaluateExpectation(Object returnValue) {
       SlimTestResult testResult;
       if (returnValue == null) {
-        testResult = SlimTestResult.ignore("Test not run");
+        testResult = SlimTestResult.testNotRun();
       } else {
         String value;
         value = returnValue.toString();
@@ -323,7 +327,7 @@ public abstract class SlimTable {
       return originalContent;
     }
 
-      // Used only by XmlFormatter.SlimTestXmlFormatter
+    // Used only by TestXmlFormatter.SlimTestXmlFormatter
     public String getExpected() {
       return originalContent;
     }
@@ -566,10 +570,13 @@ public abstract class SlimTable {
 
     private SlimTestResult evaluateCustomComparatorIfPresent() {
       SlimTestResult message = null;
+      if (customComparatorRegistry == null) {
+        return null;
+      }
       Matcher customComparatorMatcher = customComparatorPattern.matcher(expression);
       if (customComparatorMatcher.matches()) {
         String prefix = customComparatorMatcher.group(1);
-        CustomComparator customComparator = CustomComparatorRegistry.getCustomComparatorForPrefix(prefix);
+        CustomComparator customComparator = customComparatorRegistry.getCustomComparatorForPrefix(prefix);
         if (customComparator != null) {
           String expectedString = customComparatorMatcher.group(2);
           try {

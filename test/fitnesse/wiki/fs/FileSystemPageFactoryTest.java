@@ -1,6 +1,6 @@
 package fitnesse.wiki.fs;
 
-import fitnesse.components.ComponentFactory;
+import fitnesse.ConfigurationParameter;
 import fitnesse.wiki.SystemVariableSource;
 import fitnesse.wiki.VersionInfo;
 import fitnesse.wiki.WikiPage;
@@ -61,7 +61,7 @@ public class FileSystemPageFactoryTest {
     public void HtmlFileIsExternalSuitePageChild() throws Exception {
         fileSystem.makeFile(new File("./somepath/ExternalSuite/myfile.html"), "stuff");
         ExternalSuitePage page = (ExternalSuitePage) rootPage.addChildPage("ExternalSuite");
-        WikiPage child = page.getNormalChildren().get(0);
+        WikiPage child = page.getChildren().get(0);
         assertEquals(ExternalTestPage.class, child.getClass());
         assertEquals("MyfilE", child.getName());
     }
@@ -70,7 +70,7 @@ public class FileSystemPageFactoryTest {
     public void DirectoryOfHtmlFilesIsExternalSuitePageChild() throws Exception {
         fileSystem.makeFile(new File("./somepath/ExternalSuite/subsuite/myfile.html"), "stuff");
         ExternalSuitePage page = (ExternalSuitePage) rootPage.addChildPage("ExternalSuite");
-        WikiPage child = page.getNormalChildren().get(0);
+        WikiPage child = page.getChildren().get(0);
         assertEquals(ExternalSuitePage.class, child.getClass());
         assertEquals("SubsuitE", child.getName());
     }
@@ -84,7 +84,7 @@ public class FileSystemPageFactoryTest {
   @Test
   public void testShouldUseSpecifiedRevisionController() throws Exception {
     Properties testProperties = new Properties();
-    testProperties.setProperty(ComponentFactory.VERSIONS_CONTROLLER_CLASS, NullVersionsController.class.getName());
+    testProperties.setProperty(ConfigurationParameter.VERSIONS_CONTROLLER_CLASS.getKey(), NullVersionsController.class.getName());
     fileSystemPageFactory = new FileSystemPageFactory(testProperties);
 
     VersionsController defaultRevisionController = fileSystemPageFactory.getVersionsController();
@@ -95,8 +95,8 @@ public class FileSystemPageFactoryTest {
   @Test
   public void testShouldUseSpecifiedRevisionControllerWithHistoryDepth() throws Exception {
     Properties testProperties = new Properties();
-    testProperties.setProperty(ComponentFactory.VERSIONS_CONTROLLER_CLASS, NullVersionsController.class.getName());
-    testProperties.setProperty(ComponentFactory.VERSIONS_CONTROLLER_DAYS, "42");
+    testProperties.setProperty(ConfigurationParameter.VERSIONS_CONTROLLER_CLASS.getKey(), NullVersionsController.class.getName());
+    testProperties.setProperty(ConfigurationParameter.VERSIONS_CONTROLLER_DAYS.getKey(), "42");
     fileSystemPageFactory = new FileSystemPageFactory(testProperties);
 
     VersionsController defaultRevisionController = fileSystemPageFactory.getVersionsController();

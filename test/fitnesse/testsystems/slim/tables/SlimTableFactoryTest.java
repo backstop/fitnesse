@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -27,15 +28,32 @@ public class SlimTableFactoryTest {
     map.put("dt:", DecisionTable.class);
     map.put("dT:", DecisionTable.class);
     map.put("decision:", DecisionTable.class);
+    map.put("ddt:", DynamicDecisionTable.class);
+    map.put("dynamic decision:", DynamicDecisionTable.class);
     map.put("ordered query:", OrderedQueryTable.class);
     map.put("subset query:", SubsetQueryTable.class);
     map.put("query:", QueryTable.class);
     map.put("table:", TableTable.class);
     map.put("script", ScriptTable.class);
+    map.put("script:", ScriptTable.class);
     map.put("scenario", ScenarioTable.class);
     map.put("import", ImportTable.class);
     map.put("something", DecisionTable.class);
     map.put("library", LibraryTable.class);
+  }
+
+  @Test
+  public void commentTableShouldReturnNull() {
+    when(table.getCellContents(0, 0)).thenReturn("comment");
+    SlimTable slimTable = slimTableFactory.makeSlimTable(table, "0", new SlimTestContextImpl());
+    assertThat(slimTable, nullValue());
+  }
+
+  @Test
+  public void tableTypeStartingWithcommentColonShouldReturnNull() {
+    when(table.getCellContents(0, 0)).thenReturn("comment: a comment table");
+    SlimTable slimTable = slimTableFactory.makeSlimTable(table, "0", new SlimTestContextImpl());
+    assertThat(slimTable, nullValue());
   }
 
   @Test
@@ -66,6 +84,8 @@ public class SlimTableFactoryTest {
     assertThatTableTypeImportWorks("Colon is okay too", "as:Table", "Colon is okay too", TableTable.class);
 
     assertThatTableTypeImportWorks("", "", "This should be default", DecisionTable.class);
+
+    assertThatTableTypeImportWorks("My script table", "Script", "My script Table", ScriptTable.class);
   }
 
   @Test

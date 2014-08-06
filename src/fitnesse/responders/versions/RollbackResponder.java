@@ -23,7 +23,7 @@ public class RollbackResponder implements SecureResponder {
     String resource = request.getResource();
     String version = (String) request.getInput("version");
     if (version == null)
-      return new ErrorResponder("missing version").makeResponse(context, request);
+      return new ErrorResponder("Missing version.").makeResponse(context, request);
 
     WikiPagePath path = PathParser.parse(resource);
     WikiPage page = context.root.getPageCrawler().getPage(path);
@@ -34,7 +34,7 @@ public class RollbackResponder implements SecureResponder {
     page.commit(data);
 
     context.recentChanges.updateRecentChanges(data);
-    response.redirect(resource);
+    response.redirect(context.contextRoot, resource);
 
     return response;
   }

@@ -19,21 +19,19 @@ public class EmployeesHiredBefore {
     //optional function
   }
 
-  public Object query() {
-      return "This is a test";
-  }
-
-  public List<Object> query2() {
+  public List<Object> query() {
 
     return
             ListUtility.<Object>list(
                     list(
+                            list("company number", "4808147"),
                             list("employee number", "1429"),
                             list("first name", "Bob"),
                             list("last name", "Martin"),
                             list("hire date", "10-Oct-1974")
                     ),
                     list(
+                            list("company number", "5123122"),
                             list("employee number", "8832"),
                             list("first name", "James"),
                             list("last name", "Grenning"),

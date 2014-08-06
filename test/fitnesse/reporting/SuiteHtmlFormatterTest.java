@@ -2,9 +2,10 @@
 // Released under the terms of the CPL Common Public License version 1.0.
 package fitnesse.reporting;
 
-import java.text.DecimalFormatSymbols;
 import java.util.Date;
 
+import static fitnesse.reporting.DecimalSeparatorUtil.getDecimalSeparator;
+import static fitnesse.reporting.DecimalSeparatorUtil.getDecimalSeparatorForRegExp;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static util.RegexTestCase.assertHasRegexp;
@@ -35,7 +36,8 @@ public class SuiteHtmlFormatterTest {
     clock = new DateAlteringClock(new Date()).freeze();
     FitNesseContext context = FitNesseUtil.makeTestContext();
     WikiPage root = InMemoryPage.makeRoot("RooT");
-    formatter = new SuiteHtmlFormatter(context, root) {
+    CompositeExecutionLog log = new CompositeExecutionLog(root);
+    formatter = new SuiteHtmlFormatter(context, root, log) {
       @Override
       protected void writeData(String output) {
         pageBuffer.append(output);
@@ -133,7 +135,6 @@ public class SuiteHtmlFormatterTest {
 
     String results = pageBuffer.toString();
 
-    assertSubString("<h2>Test Output</h2>", results);
     assertSubString("<h2>Test System: Slim:very.slim</h2>", results);
 
     assertSubString("<div class=\"test_output_name\">", results);
@@ -177,7 +178,6 @@ public class SuiteHtmlFormatterTest {
 
   @Test
   public void testTotalTimingShouldAppearInSummary() throws Exception {
-    formatter.page = new WikiPageDummy();
     formatter.announceNumberTestsToRun(1);
     WikiTestPage firstPage = new WikiTestPage(new WikiPageDummy("page1", "content"));
     formatter.testStarted(firstPage);
@@ -190,7 +190,6 @@ public class SuiteHtmlFormatterTest {
   @Test
   public void testIndividualTestTimingsShouldAppearInSummary() throws Exception {
     TimeMeasurement totalTimeMeasurement = newConstantElapsedTimeMeasurement(900).start();
-    formatter.page = new WikiPageDummy();
     formatter.announceNumberTestsToRun(2);
     WikiTestPage firstPage = new WikiTestPage(new WikiPageDummy("page1", "content"));
     WikiTestPage secondPage = new WikiTestPage(new WikiPageDummy("page2", "content"));
@@ -212,13 +211,5 @@ public class SuiteHtmlFormatterTest {
         return theElapsedTime;
       }
     };
-  }
-
-  private String getDecimalSeparator() {
-    return String.valueOf(DecimalFormatSymbols.getInstance().getDecimalSeparator());
-  }
-
-  private String getDecimalSeparatorForRegExp() {
-    return getDecimalSeparator().replace(".", "\\.");
   }
 }

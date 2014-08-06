@@ -58,7 +58,7 @@ public abstract class PageMovementResponder implements SecureResponder {
     execute();
 
     SimpleResponse response = new SimpleResponse();
-    response.redirect(createRedirectionUrl(newParentPage, getNewPageName()));
+    response.redirect(context.contextRoot, createRedirectionUrl(newParentPage, getNewPageName()));
 
     return response;
   }
@@ -73,7 +73,7 @@ public abstract class PageMovementResponder implements SecureResponder {
   }
 
   private Responder makeErrorMessageResponder(String message) {
-    return new ErrorResponder(getErrorMessageHeader() + "<br/>" + message);
+    return new ErrorResponder(getErrorMessageHeader() + " " + message);
   }
 
   private boolean targetPageExists() {

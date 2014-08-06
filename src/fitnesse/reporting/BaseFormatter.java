@@ -3,7 +3,6 @@ package fitnesse.reporting;
 import fitnesse.FitNesseContext;
 import fitnesse.testsystems.Assertion;
 import fitnesse.testsystems.ExceptionResult;
-import fitnesse.testsystems.ExecutionLog;
 import fitnesse.testsystems.TestResult;
 import fitnesse.testsystems.TestSummary;
 import fitnesse.testrunner.WikiTestPage;
@@ -11,25 +10,19 @@ import fitnesse.testsystems.TestSystem;
 import fitnesse.testsystems.TestSystemListener;
 import fitnesse.wiki.WikiPage;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public abstract class BaseFormatter implements TestSystemListener<WikiTestPage>, Closeable {
+public abstract class BaseFormatter implements TestSystemListener<WikiTestPage> {
   protected final Logger LOG = Logger.getLogger(getClass().getName());
 
-  protected WikiPage page = null;
-  protected FitNesseContext context;
-  // Thsi counter is used by the command line executor and a few tests
-  @Deprecated
-  public static int finalErrorCount = 0;
-  protected int testCount = 0;
-  protected int failCount = 0;
-
-//  public abstract void writeHead(String pageType) throws Exception;
+  private final WikiPage page;
+  protected final FitNesseContext context;
 
   protected BaseFormatter() {
+    this.page = null;
+    this.context = null;
   }
 
   protected BaseFormatter(FitNesseContext context, final WikiPage page) {
@@ -42,33 +35,22 @@ public abstract class BaseFormatter implements TestSystemListener<WikiTestPage>,
   }
 
   public void errorOccurred(Throwable cause) {
-    if (cause != null) {
-      LOG.log(Level.INFO, "error registered in test system", cause);
-    }
-    try {
-      close();
-    } catch (IOException e) {
-      LOG.log(Level.WARNING, "Unable to close formatter after error occurred", e);
-    }
   }
 
   @Override
-  public void close() throws IOException {
-    finalErrorCount = failCount;
+  public void testSystemStarted(TestSystem testSystem) {
+  }
+
+  @Override
+  public void testStarted(WikiTestPage testPage) throws IOException {
+  }
+
+  @Override
+  public void testOutputChunk(String output) throws IOException {
   }
 
   @Override
   public void testComplete(WikiTestPage test, TestSummary summary) throws IOException {
-    testCount++;
-    if (summary.wrong > 0) {
-      failCount++;
-    }
-    if (summary.exceptions > 0) {
-      failCount++;
-    }
-  }
-
-  public void addMessageForBlankHtml() {
   }
 
   public int getErrorCount() {
@@ -84,7 +66,7 @@ public abstract class BaseFormatter implements TestSystemListener<WikiTestPage>,
   }
 
   @Override
-  public void testSystemStopped(TestSystem testSystem, ExecutionLog executionLog, Throwable cause) {
+  public void testSystemStopped(TestSystem testSystem, Throwable cause) {
     if (cause != null) {
       errorOccurred(cause);
     }

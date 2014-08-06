@@ -46,7 +46,22 @@ $(document)
 		section.find('.collapsible, .scenario').andSelf().addClass('closed');
 		section.find('.scenario').addClass('closed').next().hide();
 		return false;
-	});
+    })
+    .on('click', '.page-actions .expandall', function () {
+        $(document.body).find('.collapsible').andSelf().removeClass('closed');
+        $(document.body).find('.scenario').removeClass('closed').next().show();
+        return false;
+	})
+    .on('click', '.page-actions .collapseall', function () {
+        $(document.body).find('.collapsible, .scenario').andSelf().addClass('closed');
+        $(document.body).find('.scenario').addClass('closed').next().hide();
+        return false;
+    })
+    .ready(function () {
+        if ($(document.body).find('.collapsible, .scenario').length > 0) {
+            $('.page-actions').show();
+        }
+    });
 
 /**
  * Hide/show passed tests
@@ -62,7 +77,7 @@ $(document)
     })
     .on('change', '.testHistory #hidePassedTests', function () {
         // 3rd column shows failed tests.
-        var elems = $('tr > td:nth-child(3).ignore').parent();
+        var elems = $('tr > td:nth-child(5).pass').parent();
         if (this.checked) {
             elems.hide();
         } else {

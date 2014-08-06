@@ -176,8 +176,10 @@ public class ScenarioTable extends SlimTable {
     return assertions;
   }
 
-  protected ScriptTable createChild(ScenarioTestContext testContext, Table newTable) {
-    return new ScriptTable(newTable, id, testContext);
+  protected ScriptTable createChild(SlimTestContext testContext, Table newTable) {
+    ScriptTable scriptTable = new ScriptTable(newTable, id, testContext);
+    scriptTable.setCustomComparatorRegistry(customComparatorRegistry);
+    return scriptTable;
   }
 
   public List<SlimAssertion> call(String[] args, ScriptTable parentTable, int row) throws SyntaxError {
@@ -307,26 +309,22 @@ public class ScenarioTable extends SlimTable {
 
     @Override
     public void incrementPassedTestsCount() {
-      testContext.incrementPassedTestsCount();
-      testSummary.right++;
+      increment(ExecutionResult.PASS);
     }
 
     @Override
     public void incrementFailedTestsCount() {
-      testContext.incrementFailedTestsCount();
-      testSummary.wrong++;
+      increment(ExecutionResult.FAIL);
     }
 
     @Override
     public void incrementErroredTestsCount() {
-      testContext.incrementErroredTestsCount();
-      testSummary.exceptions++;
+      increment(ExecutionResult.ERROR);
     }
 
     @Override
     public void incrementIgnoredTestsCount() {
-      testContext.incrementIgnoredTestsCount();
-      testSummary.ignores++;
+      increment(ExecutionResult.IGNORE);
     }
 
     @Override

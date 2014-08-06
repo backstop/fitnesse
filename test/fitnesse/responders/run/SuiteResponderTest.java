@@ -2,14 +2,6 @@
 // Released under the terms of the CPL Common Public License version 1.0.
 package fitnesse.responders.run;
 
-import static fitnesse.responders.run.TestResponderTest.XmlTestUtilities.assertCounts;
-import static fitnesse.responders.run.TestResponderTest.XmlTestUtilities.getXmlDocumentFromResults;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static util.RegexTestCase.*;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
@@ -19,11 +11,12 @@ import fitnesse.http.MockRequest;
 import fitnesse.http.MockResponseSender;
 import fitnesse.http.Response;
 import fitnesse.testsystems.TestSummary;
-import fitnesse.testsystems.fit.FitSocketReceiver;
-import fitnesse.testsystems.fit.FitTestSystem;
-import fitnesse.testsystems.fit.SocketDealer;
 import fitnesse.testutil.FitNesseUtil;
-import fitnesse.wiki.*;
+import fitnesse.wiki.PageData;
+import fitnesse.wiki.PathParser;
+import fitnesse.wiki.WikiPage;
+import fitnesse.wiki.WikiPagePath;
+import fitnesse.wiki.WikiPageUtil;
 import fitnesse.wiki.mem.InMemoryPage;
 import org.junit.After;
 import org.junit.Before;
@@ -36,14 +29,18 @@ import util.DateAlteringClock;
 import util.DateTimeUtil;
 import util.XmlUtil;
 
+import static fitnesse.responders.run.TestResponderTest.XmlTestUtilities.assertCounts;
+import static fitnesse.responders.run.TestResponderTest.XmlTestUtilities.getXmlDocumentFromResults;
+import static org.junit.Assert.*;
+import static util.RegexTestCase.*;
+
 public class SuiteResponderTest {
   private static final String TEST_TIME = "12/5/2008 01:19:00";
   private MockRequest request;
-  private SuiteResponder responder;
+  private TestResponder responder;
   private WikiPage root;
   private WikiPage suite;
   private FitNesseContext context;
-  private FitSocketReceiver receiver;
   private final String fitPassFixture = "|!-fitnesse.testutil.PassFixture-!|\n";
   private final String fitFailFixture = "|!-fitnesse.testutil.FailFixture-!|\n";
   private final String simpleSlimDecisionTable = "!define TEST_SYSTEM {slim}\n" +
@@ -67,10 +64,9 @@ public class SuiteResponderTest {
     request = new MockRequest();
     request.setResource(suitePageName);
     request.addInput("debug", "");
-    responder = new SuiteResponder();
+    responder = new TestResponder();
     responder.page = suite;
 
-    receiver = new FitSocketReceiver(0, FitTestSystem.socketDealer());
     new DateAlteringClock(DateTimeUtil.getDateFromString(TEST_TIME)).freeze();
   }
 
@@ -93,16 +89,11 @@ public class SuiteResponderTest {
 
   @After
   public void tearDown() throws Exception {
-    receiver.close();
     FitNesseUtil.destroyTestContext();
   }
 
   private String runSuite() throws Exception {
-    int port = receiver.receiveSocket();
-    FitNesseContext localContext = FitNesseUtil.makeTestContext(context, port);
-    // Use this port, so the test system will talk back.
-    properties.setProperty("FITNESSE_PORT", String.valueOf(port));
-    Response response = responder.makeResponse(localContext, request);
+    Response response = responder.makeResponse(context, request);
     MockResponseSender sender = new MockResponseSender();
     sender.doSending(response);
     String results = sender.sentData();
@@ -280,13 +271,24 @@ public class SuiteResponderTest {
 
 
   @Test
-  public void exculdeSuiteQuery() throws Exception {
+  public void excludeSuiteQuery() throws Exception {
     addTestPagesWithSuiteProperty();
     request.setQueryString("excludeSuiteFilter=foo");
     String results = runSuite();
     assertHasRegexp("#TestOne", results);
     assertDoesntHaveRegexp("#TestTwo", results);
     assertHasRegexp("#TestThree", results);
+  }
+
+
+  @Test
+  public void excludeSuiteWithSuiteFilterQuery() throws Exception {
+    addTestPagesWithSuiteProperty();
+    request.setQueryString("excludeSuiteFilter=bar&suiteFilter=smoke,foo");
+    String results = runSuite();
+    assertDoesntHaveRegexp("#TestOne", results);
+    assertHasRegexp("#TestTwo", results);
+    assertDoesntHaveRegexp("#TestThree", results);
   }
 
 
@@ -340,8 +342,8 @@ public class SuiteResponderTest {
     String results = runSuite();
     assertHasRegexp("<td>fitnesse.testutil.PassFixture</td>", results);
     assertHasRegexp("<td><span class=\"pass\">wow</span></td>", results);
-    assertHasRegexp("<h3>fit\\^inprocess:fit.FitServer</h3>", results);
-    assertHasRegexp("<h3>slim\\^inprocess:fitnesse.slim.SlimService", results);
+    assertHasRegexp("<h3>fit:fit.FitServer</h3>", results);
+    assertHasRegexp("<h3>slim:fitnesse.slim.SlimService", results);
   }
 
   @Test
