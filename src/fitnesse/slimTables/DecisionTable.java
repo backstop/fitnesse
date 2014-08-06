@@ -171,7 +171,7 @@ public class DecisionTable extends SlimTable {
       for (String var : varsLeftToRight) {
         int col = vars.get(var);
         String valueToSet = table.getUnescapedCellContents(col, row);
-        valueToSet = new SymbolReplacer(valueToSet).replace();
+        valueToSet = replaceSymbols(valueToSet);
         setVariableExpectation(col, row);
         List<Object> setInstruction = prepareInstruction();
         addCall(setInstruction, getTableName(), "set" + " " + var);
